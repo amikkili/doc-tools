@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ──────────────────────────────────────── */
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    transition: background-color 0.2s, color 0.2s;
+  }
+}
+
+/* ── Component classes ─────────────────────────── */
+@layer components {
+  .tool-card {
+    @apply bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col items-start gap-4 min-h-[230px];
+  }
+  .tool-icon-wrap {
+    @apply w-14 h-14 rounded-xl flex items-center justify-center text-2xl;
+  }
+  .btn-primary {
+    @apply bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-colors duration-150;
+  }
+  .upload-zone {
+    @apply border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center transition-all duration-200 cursor-pointer;
+  }
+  .upload-zone:hover { @apply border-red-400 bg-red-50; }
+  .upload-zone.drag-over { @apply border-red-500 bg-red-50; }
+}
+
+/* ── Dark mode overrides (plain CSS, not @apply dark:) ── */
+html.dark body {
+  background-color: #030712;   /* gray-950 */
+  color: #f3f4f6;              /* gray-100 */
+}
+
+/* Navbar */
+html.dark nav {
+  background-color: #111827;   /* gray-900 */
+  border-bottom-color: #1f2937; /* gray-800 */
+}
+html.dark nav a,
+html.dark nav button { color: #d1d5db; }  /* gray-300 */
+html.dark nav a:hover,
+html.dark nav button:hover { color: #f9fafb; }
+
+/* Dark-mode toggle button itself */
+html.dark nav button.dm-toggle {
+  background-color: #1f2937;
+}
+
+/* Dropdown menus */
+html.dark nav .dropdown-menu {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+html.dark nav .dropdown-menu a {
+  color: #e5e7eb;
+}
+html.dark nav .dropdown-menu a:hover {
+  background-color: rgba(239,68,68,0.15);
+  color: #f87171;
+}
+
+/* Tool cards */
+html.dark .tool-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+html.dark .tool-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+html.dark .tool-card h3 { color: #f9fafb; }
+html.dark .tool-card p { color: #9ca3af; }
+html.dark .tool-card span { color: #6b7280; border-top-color: #374151; }
+
+/* Category filter pills */
+html.dark .cat-pill {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #d1d5db;
+}
+html.dark .cat-pill:hover { border-color: #f87171; color: #f87171; }
+
+/* Tool page cards */
+html.dark .tool-page-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+/* Upload zone */
+html.dark .upload-zone { border-color: #4b5563; }
+html.dark .upload-zone:hover {
+  border-color: #f87171;
+  background-color: rgba(239,68,68,0.07);
+}
+html.dark .upload-zone.drag-over {
+  border-color: #ef4444;
+  background-color: rgba(239,68,68,0.12);
+}
+
+/* File list items */
+html.dark .file-item {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+html.dark .file-item span { color: #e5e7eb; }
+
+/* Buttons */
+html.dark .btn-secondary {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+html.dark .btn-secondary:hover { background-color: #4b5563; }
+
+/* Inputs / textareas / selects */
+html.dark input[type="text"],
+html.dark input[type="url"],
+html.dark input[type="password"],
+html.dark textarea,
+html.dark select {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+html.dark input[type="text"]::placeholder,
+html.dark input[type="url"]::placeholder,
+html.dark textarea::placeholder { color: #6b7280; }
+html.dark input[type="text"]:focus,
+html.dark input[type="url"]:focus,
+html.dark input[type="password"]:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: #f87171;
+  outline-color: #f87171;
+}
+
+/* Readonly output textarea */
+html.dark textarea[readonly] { background-color: #111827; }
+
+/* Info boxes */
+html.dark .info-blue {
+  background-color: rgba(59,130,246,0.1);
+  border-color: rgba(59,130,246,0.3);
+  color: #93c5fd;
+}
+html.dark .info-amber {
+  background-color: rgba(245,158,11,0.1);
+  border-color: rgba(245,158,11,0.3);
+  color: #fcd34d;
+}
+
+/* Result banner */
+html.dark .result-banner {
+  background-color: rgba(34,197,94,0.1);
+  border-color: rgba(34,197,94,0.3);
+}
+html.dark .result-banner p:first-child { color: #86efac; }
+html.dark .result-banner p:last-child  { color: #4ade80; }
+
+/* Footer */
+html.dark footer { background-color: #000; }
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar-track { background: #1f2937; }
+html.dark ::-webkit-scrollbar-thumb { background: #4b5563; }

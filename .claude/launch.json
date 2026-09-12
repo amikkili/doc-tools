@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "doc-tools-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3001,
+      "cwd": "C:\\Users\\DELL\\Desktop\\AI-ML-Projects\\doc-tools\\frontend"
+    }
+  ]
+}

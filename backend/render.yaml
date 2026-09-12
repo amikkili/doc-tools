@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: doccraft-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free                     # upgrade to starter/standard for always-on
+    region: oregon                 # or frankfurt, singapore, ohio
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://your-app.vercel.app
+      - key: PORT
+        value: 8001
+      - key: MAX_FILE_SIZE_MB
+        value: 50
+      - key: TEMP_DIR
+        value: /tmp/doccraft

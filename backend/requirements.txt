@@ -1,0 +1,32 @@
+# ── Web framework ─────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12
+python-dotenv==1.0.1
+
+# ── PDF processing ────────────────────────────────
+pypdf==5.1.0
+PyMuPDF==1.24.11          # fitz — compress, rotate, watermark, pdf→jpg
+pdf2docx==0.5.8           # pdf → word
+pdfminer.six==20231228    # text extraction fallback
+
+# ── Word / Document ───────────────────────────────
+python-docx==1.1.2
+python-pptx==1.0.2
+docx2pdf==0.1.8              # Windows: uses MS Word COM for high-fidelity conversion
+
+# ── Excel ─────────────────────────────────────────
+openpyxl==3.1.5
+xlrd==2.0.1               # .xls support
+tabula-py==2.10.0         # pdf → excel table extraction
+
+# ── Images ────────────────────────────────────────
+Pillow==11.0.0
+pillow-heif==0.21.0
+
+# ── PDF generation / rendering ────────────────────
+reportlab==4.2.5
+
+# ── HTML → PDF (optional, auto-detected) ──────────
+# weasyprint==62.3        # uncomment if GTK libs are available
+# playwright              # install separately: playwright install chromium
