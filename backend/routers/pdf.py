@@ -393,9 +393,10 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
         )
 
         for page in doc:
-            # Render at 150 DPI and keep image bytes in memory — no temp files
-            pix = page.get_pixmap(matrix=fitz.Matrix(150 / 72, 150 / 72))
-            img_buf = io.BytesIO(pix.tobytes("png"))
+            # 96 DPI JPEG keeps each slide ~20-30 KB vs ~300 KB PNG,
+            # keeping the total response small enough for Vercel's proxy.
+            pix = page.get_pixmap(matrix=fitz.Matrix(96 / 72, 96 / 72))
+            img_buf = io.BytesIO(pix.tobytes("jpeg", jpg_quality=82))
 
             slide = prs.slides.add_slide(blank_layout)
             slide.shapes.add_picture(
