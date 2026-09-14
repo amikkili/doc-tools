@@ -70,6 +70,17 @@ const ALL_TOOLS = [
 ]
 
 const CATEGORIES = ['All', 'Organize PDF', 'Optimize PDF', 'PDF Security', 'Convert PDF', 'AI Tools', 'Dev Tools', 'Media & Graphics', 'Word Tools']
+const CAT_META = {
+  'All':             { icon: '⚡', color: '#6366f1' },
+  'Organize PDF':    { icon: '📋', color: '#f43f5e' },
+  'Optimize PDF':    { icon: '🗜️', color: '#3b82f6' },
+  'PDF Security':    { icon: '🔒', color: '#8b5cf6' },
+  'Convert PDF':     { icon: '🔄', color: '#0ea5e9' },
+  'AI Tools':        { icon: '🔮', color: '#a855f7' },
+  'Dev Tools':       { icon: '⌨️', color: '#10b981' },
+  'Media & Graphics':{ icon: '🎨', color: '#f59e0b' },
+  'Word Tools':      { icon: '📝', color: '#ec4899' },
+}
 const CAT_COUNTS = CATEGORIES.reduce((acc, c) => {
   acc[c] = c === 'All' ? ALL_TOOLS.length : ALL_TOOLS.filter(t => t.cat === c).length
   return acc
@@ -135,16 +146,34 @@ export default function Home() {
         <div className="cat-pills-wrap flex flex-wrap gap-2">
           {CATEGORIES.map(c => {
             const isActive = active === c
+            const meta = CAT_META[c]
             return (
               <button
                 key={c}
                 onClick={() => selectCat(c)}
-                style={{ border: 'none', cursor: 'pointer', transition: 'all 0.15s', outline: 'none' }}
-                className={`px-3.5 py-1.5 rounded-full text-sm font-semibold ${
-                  isActive ? 'cat-active bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                style={{
+                  border: isActive ? 'none' : `1.5px solid ${meta.color}30`,
+                  background: isActive
+                    ? `linear-gradient(135deg, ${DARK} 0%, ${DARK3} 100%)`
+                    : `${meta.color}12`,
+                  color: isActive ? '#fff' : meta.color,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s',
+                  outline: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  padding: '6px 13px',
+                  borderRadius: '999px',
+                  boxShadow: isActive ? `0 2px 8px ${DARK}40` : 'none',
+                }}
+                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = `${meta.color}22`; e.currentTarget.style.borderColor = `${meta.color}60` } }}
+                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = `${meta.color}12`; e.currentTarget.style.borderColor = `${meta.color}30` } }}
               >
-                {c}
+                <span style={{ fontSize: '13px', lineHeight: 1 }}>{meta.icon}</span>
+                <span>{c}</span>
               </button>
             )
           })}
