@@ -18,7 +18,8 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/doccraft
-            git pull origin master
+            git fetch origin master
+            git reset --hard origin/master
             source venv/bin/activate
             pip install -r backend/requirements.txt --quiet
             sudo systemctl restart doccraft
