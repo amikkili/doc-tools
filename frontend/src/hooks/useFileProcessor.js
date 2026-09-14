@@ -10,7 +10,8 @@ export default function useFileProcessor() {
     setProcessing(true)
     setResult(null)
     try {
-      const res = await axios.post(`/api${endpoint}`, formData, {
+      const base = import.meta.env.VITE_API_URL || ''
+      const res = await axios.post(`${base}/api${endpoint}`, formData, {
         responseType: 'blob',
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000,
