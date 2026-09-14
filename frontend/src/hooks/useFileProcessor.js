@@ -6,21 +6,34 @@ export default function useFileProcessor() {
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState(null)
 
-  const process = async (endpoint, formData, outputFilename) => {
+  const process = async (endpoint, formData, outputFilename, { base64Response = false } = {}) => {
     setProcessing(true)
     setResult(null)
     try {
-      const base = import.meta.env.VITE_API_URL || ''
-      const res = await axios.post(`${base}/api${endpoint}`, formData, {
-        responseType: 'blob',
+      const res = await axios.post(`/api${endpoint}`, formData, {
+        responseType: base64Response ? 'json' : 'blob',
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 60000,
+        timeout: 120000,
       })
-      const blob = new Blob([res.data])
+
+      let blob, name
+      if (base64Response) {
+        // Decode base64 JSON response (used when Vercel proxy strips binary bodies)
+        const { data: b64, filename } = res.data
+        const binary = atob(b64)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        blob = new Blob([bytes])
+        name = filename || outputFilename
+      } else {
+        blob = new Blob([res.data])
+        name = outputFilename
+      }
+
       const url = URL.createObjectURL(blob)
-      setResult({ url, name: outputFilename })
+      setResult({ url, name })
       toast.success('File processed successfully!')
-      return { url, name: outputFilename }
+      return { url, name }
     } catch (err) {
       let msg = 'Processing failed. Please try again.'
       const status = err.response?.status
@@ -28,9 +41,9 @@ export default function useFileProcessor() {
       if (!err.response) {
         msg = 'Cannot reach the server. Check your connection and try again.'
       } else {
-        // responseType:'blob' wraps the error body in a Blob — parse it
         try {
-          const text = await err.response.data.text()
+          const raw = err.response.data
+          const text = raw instanceof Blob ? await raw.text() : JSON.stringify(raw)
           const parsed = JSON.parse(text)
           msg = parsed.detail || msg
         } catch (_) { /* use default msg */ }

@@ -405,14 +405,16 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
                 height=slide_h,
             )
 
+        import base64
+        from fastapi.responses import JSONResponse
         stem = Path(file.filename or "presentation").stem
         buf = io.BytesIO()
         prs.save(buf)
-        return Response(
-            content=buf.getvalue(),
-            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            headers={"Content-Disposition": f'attachment; filename="{stem}.pptx"'},
-        )
+        # Return as base64 JSON — Vercel proxy strips binary bodies but passes JSON fine
+        return JSONResponse({
+            "filename": f"{stem}.pptx",
+            "data": base64.b64encode(buf.getvalue()).decode("utf-8"),
+        })
     except HTTPException:
         raise
     except Exception as e:

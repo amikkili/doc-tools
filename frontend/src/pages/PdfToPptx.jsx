@@ -13,7 +13,7 @@ export default function PdfToPptx() {
     const fd = new FormData()
     fd.append('file', files[0])
     const name = files[0].name.replace(/\.pdf$/i, '.pptx')
-    await process('/pdf/to-pptx', fd, name)
+    await process('/pdf/to-pptx', fd, name, { base64Response: true })
   }
 
   return (
