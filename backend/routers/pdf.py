@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from .utils import check_size
+from .utils import check_size, safe_error, validate_content_type
 
 router = APIRouter()
 
@@ -33,6 +33,7 @@ async def merge_pdf(files: List[UploadFile] = File(...)):
         for f in files:
             data = await f.read()
             check_size(data, f.filename or "File")
+            validate_content_type(data, "pdf", f.filename or "File")
             from pypdf import PdfReader
             reader = PdfReader(io.BytesIO(data))
             for page in reader.pages:
@@ -41,7 +42,7 @@ async def merge_pdf(files: List[UploadFile] = File(...)):
         writer.write(buf)
         return stream(buf, "merged.pdf")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── Split ──────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ async def split_pdf(file: UploadFile = File(...), pages: Optional[str] = Form(No
         from pypdf import PdfReader, PdfWriter
         data = await file.read()
         check_size(data)
+        validate_content_type(data, "pdf")
         reader = PdfReader(io.BytesIO(data))
         total = len(reader.pages)
 
@@ -86,7 +88,7 @@ async def split_pdf(file: UploadFile = File(...), pages: Optional[str] = Form(No
 
         return stream(zip_buf, "split.zip", "application/zip")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── Compress ───────────────────────────────────────────────────────────────
@@ -114,7 +116,7 @@ async def compress_pdf(file: UploadFile = File(...), quality: str = Form("medium
         buf = io.BytesIO(out_doc.tobytes(deflate=True))
         return stream(buf, "compressed.pdf")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── Rotate ─────────────────────────────────────────────────────────────────
@@ -136,7 +138,7 @@ async def rotate_pdf(file: UploadFile = File(...), angle: int = Form(90)):
         writer.write(buf)
         return stream(buf, "rotated.pdf")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── Watermark ──────────────────────────────────────────────────────────────
@@ -175,7 +177,7 @@ async def watermark_pdf(
         buf = io.BytesIO(doc.tobytes())
         return stream(buf, "watermarked.pdf")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── Protect ────────────────────────────────────────────────────────────────
@@ -195,7 +197,7 @@ async def protect_pdf(file: UploadFile = File(...), password: str = Form(...)):
         writer.write(buf)
         return stream(buf, "protected.pdf")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── PDF → Word ─────────────────────────────────────────────────────────────
@@ -231,7 +233,7 @@ async def pdf_to_word(file: UploadFile = File(...)):
             headers={"Content-Disposition": 'attachment; filename="converted.docx"'},
         )
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── PDF → JPG ──────────────────────────────────────────────────────────────
@@ -255,7 +257,7 @@ async def pdf_to_jpg(file: UploadFile = File(...), dpi: int = Form(150)):
 
         return stream(zip_buf, "pdf-images.zip", "application/zip")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── Images → PDF ───────────────────────────────────────────────────────────
@@ -291,7 +293,7 @@ async def images_to_pdf(
         doc.build(story)
         return stream(buf, "images.pdf")
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── PowerPoint → PDF ───────────────────────────────────────────────────────
@@ -339,7 +341,7 @@ async def pptx_to_pdf(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── PDF → PowerPoint ───────────────────────────────────────────────────────
@@ -394,7 +396,7 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 # ── PDF → Excel ────────────────────────────────────────────────────────────
@@ -439,4 +441,4 @@ async def pdf_to_excel(file: UploadFile = File(...)):
             headers={"Content-Disposition": 'attachment; filename="extracted.xlsx"'},
         )
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))

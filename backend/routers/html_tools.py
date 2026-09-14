@@ -1,5 +1,6 @@
 import io
 from fastapi import APIRouter, Form, HTTPException
+from .utils import safe_error
 from fastapi.responses import StreamingResponse
 
 router = APIRouter()
@@ -21,7 +22,7 @@ async def html_to_pdf(url: str = Form(None), html: str = Form(None)):
             headers={"Content-Disposition": 'attachment; filename="page.pdf"'},
         )
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 def _url_to_pdf(url: str) -> bytes:

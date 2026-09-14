@@ -62,6 +62,7 @@ const ALL_TOOLS = [
   { path: '/color-palette',     icon: '🎨', label: 'Color Palette',            desc: 'Upload any photo and automatically extract 5–10 dominant colors with their HEX codes for use in design projects',                 color: 'bg-pink-100',          cat: 'Media & Graphics' },
   { path: '/css-gradient',      icon: '🌈', label: 'CSS Gradient Maker',       desc: 'Design smooth linear, radial, or conic CSS gradients visually and copy the ready-to-use CSS background property',                 color: 'bg-violet-100',        cat: 'Media & Graphics' },
   { path: '/image-cropper',     icon: '✂️', label: 'Image Cropper',            desc: 'Drag a crop handle to cut any image to exact dimensions — choose a preset aspect ratio or enter custom pixel values',             color: 'bg-orange-100',        cat: 'Media & Graphics' },
+  { path: '/image-resizer',    icon: '⤢',  label: 'Image Resizer',            desc: 'Resize to exact pixel dimensions, convert format (JPEG/PNG/WebP), adjust quality — see live before & after comparison',               color: 'bg-violet-100',        cat: 'Media & Graphics' },
   { path: '/bg-remover',        icon: '🪄', label: 'Background Remover',       desc: 'Automatically remove the background from any product photo or portrait using AI — download as a transparent PNG',                 color: 'bg-pink-100',          cat: 'Media & Graphics' },
   { path: '/heic-converter',    icon: '📷', label: 'HEIC to JPG',              desc: 'Convert iPhone HEIC/HEIF photos to universally compatible JPEGs right in the browser — no upload to a server needed',             color: 'bg-sky-100',           cat: 'Media & Graphics' },
   { path: '/word-compare',      icon: '🔍', label: 'Word Compare',             desc: 'Paste two pieces of text and see every addition, deletion, and word-level change highlighted side-by-side',                       color: 'bg-amber-100',         cat: 'Word Tools' },
@@ -100,7 +101,7 @@ export default function Home() {
         <h1 className="text-2xl sm:text-3xl lg:text-4xl" style={{ fontWeight: 800, color: '#fff', margin: '0 0 14px', lineHeight: 1.25 }}>
           The Smart All-in-One Workspace for Your Documents and Code
         </h1>
-        <p style={{ fontSize: '15px', color: 'rgba(199,210,254,0.9)', margin: '0 0 10px', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
+        <p className="sm:whitespace-nowrap" style={{ fontSize: '15px', color: 'rgba(199,210,254,0.9)', margin: '0 0 10px', lineHeight: 1.6 }}>
           Every utility tool you need to process PDFs, clean code logs, and compare documents — <span style={{ color: ACCENT, fontWeight: 700 }}>100% FREE</span>, no signup needed.
         </p>
         <p style={{ fontSize: '13.5px', color: 'rgba(199,210,254,0.6)', margin: 0, lineHeight: 1.8 }}>
@@ -108,9 +109,9 @@ export default function Home() {
         </p>
       </div>
 
-      {/* ── Stats bar ── */}
-      <div className="px-4 sm:px-8 py-4" style={{ background: '#fff', borderBottom: '1px solid #e0e7ff' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0', flexWrap: 'wrap' }}>
+      {/* ── Stats bar — desktop only ── */}
+      <div className="hidden sm:block px-8 py-4" style={{ background: '#fff', borderBottom: '1px solid #e0e7ff' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0' }}>
           {[
             { n: '57+',                        l: 'Free Tools' },
             { n: '100%',                       l: 'Browser-Based' },
@@ -119,7 +120,7 @@ export default function Home() {
             { n: visitors.toLocaleString()+'+',l: 'Happy Visitors' },
           ].map(({ n, l }, i, arr) => (
             <div key={l} style={{ display: 'flex', alignItems: 'center' }}>
-              <div className="px-4 sm:px-8" style={{ textAlign: 'center' }}>
+              <div className="px-8" style={{ textAlign: 'center' }}>
                 <p style={{ fontSize: '1.5rem', fontWeight: 800, color: ACCENT2, margin: '0 0 2px', lineHeight: 1 }}>{n}</p>
                 <p style={{ fontSize: '12px', color: '#64748b', margin: 0, fontWeight: 500 }}>{l}</p>
               </div>
@@ -129,29 +130,21 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Category tabs ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e0e7ff', padding: '0 24px' }}>
-        <div style={{ display: 'flex', gap: '2px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+      {/* ── Category pills ── */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #e0e7ff' }} className="px-4 py-3">
+        <div className="cat-pills-wrap flex flex-wrap gap-2">
           {CATEGORIES.map(c => {
             const isActive = active === c
             return (
               <button
                 key={c}
                 onClick={() => selectCat(c)}
-                style={{
-                  flexShrink: 0, padding: '14px 16px', border: 'none', cursor: 'pointer',
-                  background: 'transparent', fontSize: '13.5px', fontWeight: isActive ? 700 : 500,
-                  color: isActive ? ACCENT2 : '#64748b',
-                  borderBottom: isActive ? `2px solid ${ACCENT2}` : '2px solid transparent',
-                  transition: 'all 0.15s', whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = DARK }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = '#64748b' }}
+                style={{ border: 'none', cursor: 'pointer', transition: 'all 0.15s', outline: 'none' }}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-semibold ${
+                  isActive ? 'cat-active bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
                 {c}
-                <span style={{ marginLeft: '6px', fontSize: '11px', fontWeight: 700, background: isActive ? '#fef2f2' : '#f1f5f9', color: isActive ? ACCENT2 : '#94a3b8', padding: '1px 7px', borderRadius: '999px' }}>
-                  {CAT_COUNTS[c]}
-                </span>
               </button>
             )
           })}
@@ -159,32 +152,29 @@ export default function Home() {
       </div>
 
       {/* ── Tool grid ── */}
-      <div style={{ background: CONTENT_BG, padding: '28px 28px 60px' }}>
+      <div className="px-4 sm:px-7 py-5 sm:py-7 pb-16" style={{ background: CONTENT_BG }}>
         {visible.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#94a3b8' }}>
             <p style={{ fontSize: '48px', marginBottom: '12px' }}>🔍</p>
             <p style={{ fontSize: '18px', fontWeight: 600, color: '#475569' }}>No tools in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {visible.map(tool => (
               <Link key={tool.path} to={tool.path} className="tool-card group" style={{ textDecoration: 'none' }}>
                 <div className={`tool-icon-wrap ${tool.color}`}>
-                  <span style={{ fontSize: '28px', lineHeight: 1 }}>{tool.icon}</span>
+                  <span style={{ fontSize: '22px', lineHeight: 1 }}>{tool.icon}</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#1e293b', margin: 0, lineHeight: 1.25 }}
-                    className="group-hover:text-rose-500">
+                <div className="flex-1 min-w-0">
+                  <h3 className="group-hover:text-rose-500"
+                    style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b', margin: 0, lineHeight: 1.3 }}>
                     {tool.label}
                   </h3>
-                  <p style={{ fontSize: '15.5px', color: '#64748b', lineHeight: 1.7, margin: 0 }}
-                    className="line-clamp-3">
+                  <p className="line-clamp-2 sm:line-clamp-3"
+                    style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.55, margin: '4px 0 0' }}>
                     {tool.desc}
                   </p>
                 </div>
-                <span style={{ fontSize: '12px', color: '#94a3b8', paddingTop: '10px', borderTop: '1px solid #ede9fe', display: 'block', width: '100%' }}>
-                  {tool.cat}
-                </span>
               </Link>
             ))}
           </div>

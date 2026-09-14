@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ToolPageLayout from '../components/ToolPageLayout'
 import FileUploadZone from '../components/FileUploadZone'
 import useFileProcessor from '../hooks/useFileProcessor'
+import { validateFile } from '../lib/validateFile'
 import toast from 'react-hot-toast'
 
 export default function WordToPdf() {
@@ -10,6 +11,8 @@ export default function WordToPdf() {
 
   const handleProcess = async () => {
     if (!files[0]) return toast.error('Please select a Word file')
+    const v = validateFile(files[0], 'docx')
+    if (!v.ok) return toast.error(v.message)
     const fd = new FormData()
     fd.append('file', files[0])
     const name = files[0].name.replace(/\.(doc|docx)$/i, '.pdf')

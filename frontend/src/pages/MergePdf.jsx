@@ -3,6 +3,7 @@ import ToolPageLayout from '../components/ToolPageLayout'
 import FileUploadZone from '../components/FileUploadZone'
 import useFileProcessor from '../hooks/useFileProcessor'
 import { shouldUseClient, mergePdfClient, CLIENT_THRESHOLD_MB } from '../lib/pdfClientOps'
+import { validateFiles } from '../lib/validateFile'
 import toast from 'react-hot-toast'
 
 export default function MergePdf() {
@@ -15,6 +16,8 @@ export default function MergePdf() {
 
   const handleProcess = async () => {
     if (files.length < 2) return toast.error('Please select at least 2 PDF files')
+    const v = validateFiles(files, 'pdf')
+    if (!v.ok) return toast.error(v.message)
 
     if (useClient) {
       try {

@@ -66,6 +66,7 @@ import CodeDiff from './pages/CodeDiff'
 import PptxToPdf from './pages/PptxToPdf'
 import HeicConverter from './pages/HeicConverter'
 import LabCodeCleaner from './pages/LabCodeCleaner'
+import ImageResizer from './pages/ImageResizer'
 import SignUp from './pages/SignUp'
 import useDarkMode from './hooks/useDarkMode'
 
@@ -147,6 +148,7 @@ export default function App() {
           <Route path="/pptx-to-pdf" element={<PptxToPdf />} />
           <Route path="/heic-converter" element={<HeicConverter />} />
           <Route path="/lab-code-cleaner" element={<LabCodeCleaner />} />
+          <Route path="/image-resizer" element={<ImageResizer />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

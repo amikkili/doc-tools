@@ -1,7 +1,7 @@
 import io
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from .utils import check_size
+from .utils import check_size, safe_error, validate_content_type
 
 router = APIRouter()
 
@@ -12,6 +12,7 @@ async def excel_to_pdf(file: UploadFile = File(...)):
     try:
         data = await file.read()
         check_size(data)
+        validate_content_type(data, "xlsx", file.filename or "File")
         pdf_bytes = _excel_to_pdf(data, file.filename or "file.xlsx")
         return StreamingResponse(
             io.BytesIO(pdf_bytes),
@@ -19,7 +20,7 @@ async def excel_to_pdf(file: UploadFile = File(...)):
             headers={"Content-Disposition": 'attachment; filename="converted.pdf"'},
         )
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 def _excel_to_pdf(data: bytes, filename: str) -> bytes:

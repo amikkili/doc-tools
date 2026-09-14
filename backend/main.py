@@ -1,9 +1,15 @@
 import os
+import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from routers import pdf, word, excel, html_tools, ml_tools, image
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 load_dotenv()
 
@@ -46,6 +52,17 @@ app.include_router(excel.router,      prefix="/api/excel", tags=["Excel"])
 app.include_router(html_tools.router, prefix="/api/html",  tags=["HTML"])
 app.include_router(ml_tools.router,  prefix="/api/ml",    tags=["ML"])
 app.include_router(image.router,     prefix="/api/image", tags=["Image"])
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import logging
+    logging.getLogger("doccraft").error(
+        "Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True
+    )
+    env = os.getenv("ENVIRONMENT", "development")
+    detail = str(exc) if env != "production" else "An unexpected error occurred. Please try again."
+    return JSONResponse(status_code=500, content={"detail": detail})
 
 
 @app.get("/")

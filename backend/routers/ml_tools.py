@@ -1,7 +1,7 @@
 import io
 import re
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from .utils import check_size
+from .utils import check_size, safe_error
 
 router = APIRouter()
 
@@ -186,7 +186,7 @@ async def detect_document_type(file: UploadFile = File(...)):
         }
 
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 def _generate_description(dtype: str, conf: float) -> str:
@@ -312,7 +312,7 @@ async def predict_conversion_quality(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, safe_error(e))
 
 
 def _estimate_layout_complexity(doc, sample_pages: int) -> tuple[int, str]:

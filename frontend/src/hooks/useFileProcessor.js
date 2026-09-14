@@ -21,7 +21,34 @@ export default function useFileProcessor() {
       toast.success('File processed successfully!')
       return { url, name: outputFilename }
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Processing failed'
+      let msg = 'Processing failed. Please try again.'
+      const status = err.response?.status
+
+      if (!err.response) {
+        msg = 'Cannot reach the server. Check your connection and try again.'
+      } else {
+        // responseType:'blob' wraps the error body in a Blob — parse it
+        try {
+          const text = await err.response.data.text()
+          const parsed = JSON.parse(text)
+          msg = parsed.detail || msg
+        } catch (_) { /* use default msg */ }
+
+        if (status === 413) {
+          msg = 'File is too large. Please upload a smaller file.'
+          toast.error(msg)
+        } else if (status === 400) {
+          toast(msg, { icon: '⚠️' })
+        } else if (status === 503) {
+          msg = msg || 'Service temporarily unavailable. Please try again later.'
+          toast.error(msg)
+        } else {
+          toast.error(msg)
+        }
+        setProcessing(false)
+        return
+      }
+
       toast.error(msg)
     } finally {
       setProcessing(false)

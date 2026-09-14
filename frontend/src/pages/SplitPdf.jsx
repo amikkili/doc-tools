@@ -3,6 +3,7 @@ import ToolPageLayout from '../components/ToolPageLayout'
 import FileUploadZone from '../components/FileUploadZone'
 import useFileProcessor from '../hooks/useFileProcessor'
 import { shouldUseClient, splitPdfClient, CLIENT_THRESHOLD_MB } from '../lib/pdfClientOps'
+import { validateFile } from '../lib/validateFile'
 import toast from 'react-hot-toast'
 
 export default function SplitPdf() {
@@ -14,6 +15,8 @@ export default function SplitPdf() {
 
   const handleProcess = async () => {
     if (!files[0]) return toast.error('Please select a PDF file')
+    const v = validateFile(files[0], 'pdf')
+    if (!v.ok) return toast.error(v.message)
 
     if (useClient) {
       try {
