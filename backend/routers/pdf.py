@@ -319,9 +319,24 @@ async def pptx_to_pdf(file: UploadFile = File(...)):
             with open(src, "wb") as f:
                 f.write(data)
 
+            # Each conversion gets its own isolated profile dir to prevent
+            # LibreOffice lock-file conflicts that silently produce blank PDFs.
+            profile_dir = os.path.join(tmpdir, "lo_profile")
+            os.makedirs(profile_dir, exist_ok=True)
+            user_install = f"file://{profile_dir}"
+
             proc = subprocess.run(
-                [soffice, "--headless", "--convert-to", "pdf", "--outdir", tmpdir, src],
+                [
+                    soffice,
+                    f"-env:UserInstallation={user_install}",
+                    "--headless",
+                    "--norestore",
+                    "--convert-to", "pdf",
+                    "--outdir", tmpdir,
+                    src,
+                ],
                 capture_output=True, text=True, timeout=120,
+                env={**os.environ, "HOME": tmpdir},
             )
             if proc.returncode != 0:
                 raise HTTPException(500, f"Conversion failed: {proc.stderr[:500]}")
@@ -331,6 +346,8 @@ async def pptx_to_pdf(file: UploadFile = File(...)):
                 raise HTTPException(500, "LibreOffice produced no output file")
 
             pdf_bytes = open(pdf_path, "rb").read()
+            if len(pdf_bytes) < 500:
+                raise HTTPException(500, f"Conversion produced an empty PDF (stderr: {proc.stderr[:300]})")
 
         stem = Path(file.filename or "presentation").stem
         return StreamingResponse(
@@ -404,41 +421,158 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
 @router.post("/to-excel")
 async def pdf_to_excel(file: UploadFile = File(...)):
     try:
-        import tabula
         import tempfile, os
+        import openpyxl
 
         data = await file.read()
         check_size(data)
+
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
             tmp.write(data)
             tmp_path = tmp.name
 
         try:
-            dfs = tabula.read_pdf(tmp_path, pages="all", multiple_tables=True)
+            # Try tabula for structured table extraction
+            try:
+                import tabula
+                dfs = tabula.read_pdf(tmp_path, pages="all", multiple_tables=True, silent=True)
+                dfs = [df for df in dfs if not df.empty and df.shape[1] > 1 and df.shape[0] > 0]
+            except Exception:
+                dfs = []
+
+            wb = openpyxl.Workbook()
+            wb.remove(wb.active)
+
+            if dfs:
+                for i, df in enumerate(dfs):
+                    ws = wb.create_sheet(title=f"Table {i + 1}")
+                    _pdf_excel_styled_table(ws, df)
+            else:
+                # No tables — extract text line-by-line with PyMuPDF
+                ws = wb.create_sheet(title="Content")
+                _pdf_excel_text_layout(ws, tmp_path)
+
         finally:
             os.unlink(tmp_path)
 
-        import openpyxl
-        wb = openpyxl.Workbook()
-        wb.remove(wb.active)
-
-        for i, df in enumerate(dfs):
-            ws = wb.create_sheet(title=f"Table_{i+1}")
-            ws.append(list(df.columns))
-            for row in df.itertuples(index=False):
-                ws.append(list(row))
-
-        if not wb.worksheets:
-            ws = wb.create_sheet("Sheet1")
-            ws.append(["No tables found in PDF"])
-
+        fname = (file.filename or "extracted").rsplit(".", 1)[0]
         buf = io.BytesIO()
         wb.save(buf)
         buf.seek(0)
         return StreamingResponse(
             buf,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": 'attachment; filename="extracted.xlsx"'},
+            headers={"Content-Disposition": f'attachment; filename="{fname}.xlsx"'},
         )
     except Exception as e:
         raise HTTPException(500, safe_error(e))
+
+
+def _xlsx_header_style(cell, bg="1E3A5F"):
+    from openpyxl.styles import Font, PatternFill, Alignment
+    cell.font = Font(bold=True, color="FFFFFF", name="Calibri", size=11)
+    cell.fill = PatternFill("solid", fgColor=bg)
+    cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+
+def _xlsx_data_style(cell, even=False):
+    from openpyxl.styles import Font, PatternFill, Alignment
+    cell.font = Font(name="Calibri", size=10)
+    cell.alignment = Alignment(vertical="center", wrap_text=True)
+    if even:
+        cell.fill = PatternFill("solid", fgColor="EFF4FB")
+
+
+def _xlsx_thin_border(ws):
+    from openpyxl.styles import Border, Side
+    thin = Side(style="thin", color="D0D7DE")
+    bdr = Border(left=thin, right=thin, top=thin, bottom=thin)
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.border = bdr
+
+
+def _xlsx_auto_widths(ws, min_w=10, max_w=55):
+    from openpyxl.utils import get_column_letter
+    for col in ws.columns:
+        best = 0
+        letter = get_column_letter(col[0].column)
+        for cell in col:
+            try:
+                best = max(best, len(str(cell.value or "")))
+            except Exception:
+                pass
+        ws.column_dimensions[letter].width = min(max(best + 2, min_w), max_w)
+
+
+def _pdf_excel_styled_table(ws, df):
+    """Write a pandas DataFrame as a beautifully formatted Excel sheet."""
+    import math
+
+    cols = list(df.columns)
+    n_cols = len(cols)
+
+    # Header
+    ws.append(cols)
+    for c in range(1, n_cols + 1):
+        _xlsx_header_style(ws.cell(row=1, column=c))
+    ws.row_dimensions[1].height = 24
+    ws.freeze_panes = "A2"
+
+    # Data rows — clean NaN
+    for row_idx, row in enumerate(df.itertuples(index=False), start=2):
+        values = []
+        for v in row:
+            try:
+                if v is None or (isinstance(v, float) and math.isnan(v)):
+                    values.append("")
+                else:
+                    values.append(str(v))
+            except Exception:
+                values.append("")
+        ws.append(values)
+        even = row_idx % 2 == 0
+        for c in range(1, n_cols + 1):
+            _xlsx_data_style(ws.cell(row=row_idx, column=c), even=even)
+        ws.row_dimensions[row_idx].height = 18
+
+    _xlsx_thin_border(ws)
+    _xlsx_auto_widths(ws)
+
+
+def _pdf_excel_text_layout(ws, pdf_path: str):
+    """Extract text from a non-tabular PDF and lay it out cleanly."""
+    import fitz  # PyMuPDF
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    # Column headers
+    ws.cell(row=1, column=1, value="Page")
+    ws.cell(row=1, column=2, value="Line")
+    ws.cell(row=1, column=3, value="Content")
+    for c in range(1, 4):
+        _xlsx_header_style(ws.cell(row=1, column=c))
+    ws.row_dimensions[1].height = 24
+    ws.freeze_panes = "A2"
+    ws.column_dimensions["A"].width = 8
+    ws.column_dimensions["B"].width = 8
+    ws.column_dimensions["C"].width = 90
+
+    doc = fitz.open(pdf_path)
+    row_idx = 2
+    for page_num, page in enumerate(doc, start=1):
+        lines = [l.strip() for l in page.get_text().split("\n") if l.strip()]
+        for line_num, line in enumerate(lines, start=1):
+            even = row_idx % 2 == 0
+            pg_cell = ws.cell(row=row_idx, column=1, value=page_num)
+            ln_cell = ws.cell(row=row_idx, column=2, value=line_num)
+            ct_cell = ws.cell(row=row_idx, column=3, value=line)
+            for cell in (pg_cell, ln_cell):
+                cell.font = Font(name="Calibri", size=10, color="64748B")
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                if even:
+                    cell.fill = PatternFill("solid", fgColor="EFF4FB")
+            _xlsx_data_style(ct_cell, even=even)
+            ws.row_dimensions[row_idx].height = 18
+            row_idx += 1
+    doc.close()
+    _xlsx_thin_border(ws)
