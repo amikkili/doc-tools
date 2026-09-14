@@ -405,6 +405,7 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
         stem = Path(file.filename or "presentation").stem
         buf = io.BytesIO()
         prs.save(buf)
+        buf.seek(0)
         return StreamingResponse(
             buf,
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
