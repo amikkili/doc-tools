@@ -367,7 +367,6 @@ async def pptx_to_pdf(file: UploadFile = File(...)):
 async def pdf_to_pptx(file: UploadFile = File(...)):
     try:
         import fitz
-        import tempfile, os
         from pptx import Presentation
         from pptx.util import Emu
 
@@ -380,27 +379,31 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
 
         prs = Presentation()
 
-        # Set slide dimensions from first page (convert pt → EMU: 1 pt = 12700 EMU)
+        # Match slide size to PDF page (1 pt = 12700 EMU)
         first = doc[0]
-        prs.slide_width  = Emu(int(first.rect.width  * 12700))
-        prs.slide_height = Emu(int(first.rect.height * 12700))
+        slide_w = Emu(int(first.rect.width  * 12700))
+        slide_h = Emu(int(first.rect.height * 12700))
+        prs.slide_width  = slide_w
+        prs.slide_height = slide_h
 
-        blank_layout = prs.slide_layouts[6]  # blank
+        # Find a truly blank layout (no placeholders)
+        blank_layout = next(
+            (l for l in prs.slide_layouts if len(l.placeholders) == 0),
+            prs.slide_layouts[6],
+        )
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            for i, page in enumerate(doc):
-                mat = fitz.Matrix(150 / 72, 150 / 72)   # 150 DPI
-                pix = page.get_pixmap(matrix=mat)
-                img_path = os.path.join(tmpdir, f"page_{i}.png")
-                pix.save(img_path)
+        for page in doc:
+            # Render at 150 DPI and keep image bytes in memory — no temp files
+            pix = page.get_pixmap(matrix=fitz.Matrix(150 / 72, 150 / 72))
+            img_buf = io.BytesIO(pix.tobytes("png"))
 
-                slide = prs.slides.add_slide(blank_layout)
-                slide.shapes.add_picture(
-                    img_path,
-                    left=0, top=0,
-                    width=prs.slide_width,
-                    height=prs.slide_height,
-                )
+            slide = prs.slides.add_slide(blank_layout)
+            slide.shapes.add_picture(
+                img_buf,
+                left=0, top=0,
+                width=slide_w,
+                height=slide_h,
+            )
 
         stem = Path(file.filename or "presentation").stem
         buf = io.BytesIO()
