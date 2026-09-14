@@ -22,7 +22,6 @@ tabula-py==2.10.0         # pdf → excel table extraction
 
 # ── Images ────────────────────────────────────────
 Pillow==11.0.0
-pillow-heif==0.21.0
 
 # ── PDF generation / rendering ────────────────────
 reportlab==4.2.5
