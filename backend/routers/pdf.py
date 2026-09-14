@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from .utils import check_size, safe_error, validate_content_type
 
 router = APIRouter()
@@ -408,9 +408,8 @@ async def pdf_to_pptx(file: UploadFile = File(...)):
         stem = Path(file.filename or "presentation").stem
         buf = io.BytesIO()
         prs.save(buf)
-        buf.seek(0)
-        return StreamingResponse(
-            buf,
+        return Response(
+            content=buf.getvalue(),
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             headers={"Content-Disposition": f'attachment; filename="{stem}.pptx"'},
         )
